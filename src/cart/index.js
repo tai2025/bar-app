@@ -2,6 +2,8 @@ import { Avatar, Box, Button, Divider, Drawer, Paper, Typography, colors } from 
 import DeleteIcon from '@mui/icons-material/Delete'
 import { useUIContext } from "../context";
 import useCart from "../context/useCart"
+import { loadStripe } from "@stripe/stripe-js"
+
 
 
 export default function Cart() {
@@ -61,7 +63,39 @@ export default function Cart() {
         return (parseFloat(subtotal()) + parseFloat(taxes())).toFixed(2)
     }
 
+    const makePayment = async () => {
+        const stripe = await loadStripe("pk_test_51PFo8xRxJ7bA9hpqOVXijSaJCAZj9bq658A9xaDUAOdY6asMaBG7gEiUzHsF515lvDaShzmBfqKLWi2Z6AMoFlGZ00RrykSB58")
 
+        const body = {
+            products : cart
+        }
+
+        const headers = {
+            "Content-Type":"application/json"
+        }
+        
+        const apiURL = "http://localhost:4000/api"
+
+        const response = await fetch(`${apiURL}/create-checkout-session`, {
+            method:"POST",
+            headers:headers,
+            body:JSON.stringify(body)
+        })
+
+        const sessionData = await response.json();
+
+        console.log("Session Data:", sessionData); // Debugging statement
+
+        if (!sessionData.sessionId) {
+            console.error("Session ID is undefined or null");
+            return;
+        }
+
+        // Redirecting to Stripe Checkout
+        const session = await stripe.redirectToCheckout({
+            sessionId: sessionData.sessionId // Accessing the session ID from the response
+        });
+    }
 
     return (
       <Drawer
@@ -104,7 +138,7 @@ export default function Cart() {
                 justifyContent={"space-between"}
             >
                 <Typography variant="h6" sx={{mr: 20}}>Taxes: </Typography>
-                <Typography variant="h6" sx={{mr: 3}}>{taxes()}</Typography>
+                <Typography variant="h6" sx={{mr: 1}}>{taxes()}</Typography>
             </Box>
             <Box
                 display="flex"
@@ -115,7 +149,13 @@ export default function Cart() {
                 <Typography variant="h6" sx={{mr: 0}}>{total()}</Typography>
             </Box>
             
-            <Button sx={{mt:4}} variant="contained">Proceed To Payment</Button>
+            <Button 
+                sx={{mt:4}} 
+                variant="contained"
+                onClick={makePayment}
+            >
+                Proceed To Payment
+            </Button>
         </Box>
     </Drawer>  
     );

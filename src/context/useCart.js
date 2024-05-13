@@ -47,8 +47,13 @@ function useCart() {
         localStorage.setItem("cart", JSON.stringify(x))
     }
 
+    const removeAll = () => {
+        setCart([])
+        localStorage.setItem("cart", JSON.stringify([]))
+    }
 
-    return {addToCart, removeFromCart}
+
+    return {addToCart, removeFromCart, removeAll}
 }
 
 export default useCart;
